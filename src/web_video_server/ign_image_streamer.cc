@@ -45,9 +45,9 @@ void IgnTransportImageStreamer::Start()
   }
 }
 
-void IgnTransportImageStreamer::Initialize()
+void IgnTransportImageStreamer::Initialize(const ignition::msgs::Image &_msg)
 {
-  // nop
+  (void) _msg;
 }
 
 void IgnTransportImageStreamer::OnImageMsg(const ignition::msgs::Image &_msg)
@@ -62,7 +62,7 @@ void IgnTransportImageStreamer::OnImageMsg(const ignition::msgs::Image &_msg)
   {
     if (!this->initialized)
     {
-      this->Initialize();
+      this->Initialize(_msg);
       this->initialized = true;
     }
 

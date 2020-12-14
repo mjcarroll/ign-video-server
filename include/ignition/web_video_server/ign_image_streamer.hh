@@ -22,7 +22,7 @@ class IgnTransportImageStreamer: public ImageStreamer
 
   protected: virtual void SendImage(const ignition::msgs::Image &_msg) = 0;
 
-  protected: virtual void Initialize();
+  protected: virtual void Initialize(const ignition::msgs::Image &_msg);
 
   protected: std::string topic;
 

@@ -9,7 +9,6 @@
 namespace ignition {
 namespace web_video_server
 {
-
 using Time = std::chrono::time_point<std::chrono::system_clock>;
 
 struct PendingFooter {

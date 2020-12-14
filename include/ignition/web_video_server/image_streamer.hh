@@ -4,7 +4,6 @@
 #include "ignition/async_web_server_cpp/http_connection.hh"
 #include "ignition/async_web_server_cpp/http_request.hh"
 
-
 namespace ignition {
 namespace web_video_server {
 
@@ -17,9 +16,7 @@ class ImageStreamer
 
   public: virtual void Start() = 0;
 
-  public: bool IsInactive() {
-    return inactive;
-  }
+  public: bool IsInactive() { return inactive; }
 
   protected: async_web_server_cpp::HttpConnectionPtr connection;
   protected: async_web_server_cpp::HttpRequest request;

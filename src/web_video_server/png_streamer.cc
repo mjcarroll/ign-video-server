@@ -15,7 +15,6 @@ PngStreamer::PngStreamer(const async_web_server_cpp::HttpRequest &_request,
 
 void PngStreamer::SendImage(const ignition::msgs::Image &_msg)
 {
-  std::cout << "Received msg" << std::endl;
   std::vector<unsigned char> buffer;
 
   common::Image image;
@@ -27,7 +26,6 @@ void PngStreamer::SendImage(const ignition::msgs::Image &_msg)
   auto now = std::chrono::system_clock::now();
 
   stream.sendPartAndClear(now, "image/png", buffer);
-  std::cout << "Sent image" << std::endl;
 }
 
 ImageStreamerPtr

@@ -5,6 +5,7 @@ add_library(
   web_video_server.cc
   multipart_stream.cc
   png_streamer.cc
+  libav_streamer.cc
 )
 
 target_link_libraries(
@@ -15,6 +16,7 @@ target_link_libraries(
   ignition-transport9::ignition-transport9
   ignition-common3::ignition-common3
   ignition-common3::graphics
+  ignition-common3::av
 )
 
 add_executable(
@@ -23,4 +25,3 @@ add_executable(
 )
 
 target_link_libraries(video_server PUBLIC web_video_server)
-

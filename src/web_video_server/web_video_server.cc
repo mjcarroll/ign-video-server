@@ -20,9 +20,9 @@ WebVideoServer::WebVideoServer(const std::string &_address, int _port):
 
   handler_group.addHandlerForPath("/", std::bind(&WebVideoServer::handle_list_streams, this, _1, _2, _3, _4));
   handler_group.addHandlerForPath("/stream", std::bind(&WebVideoServer::handle_stream, this, _1, _2, _3, _4));
-  /*
   handler_group.addHandlerForPath("/stream_viewer",
                                    std::bind(&WebVideoServer::handle_stream_viewer, this, _1, _2, _3, _4));
+  /*
   handler_group.addHandlerForPath("/snapshot", std::bind(&WebVideoServer::handle_snapshot, this, _1, _2, _3, _4));
   */
 
@@ -50,6 +50,8 @@ bool WebVideoServer::handle_list_streams(const async_web_server_cpp::HttpRequest
 {
   (void) begin;
   (void) end;
+  (void) request;
+
   igndbg << "WebVideoServer::handle_list_streams()\n";
 
   std::vector<std::string> allTopics;
@@ -69,6 +71,7 @@ bool WebVideoServer::handle_list_streams(const async_web_server_cpp::HttpRequest
       }
     }
   }
+
   async_web_server_cpp::HttpReply::builder(async_web_server_cpp::HttpReply::ok)
     .header("Connection", "close")
     .header("Server", "web_video_server")
@@ -91,20 +94,13 @@ R"(<html>
     connection->write("<li>" + topic + "</li>");
   }
   connection->write("</ul>");
-  std::stringstream ss;
-  ss << "<img src=\"/stream?";
-  ss << request.query;
-  ss << "\"></img>";
-
-  connection->write(ss.str());
-
   connection->write("</body></html>");
   return true;
 }
 
 bool WebVideoServer::handle_stream(const async_web_server_cpp::HttpRequest &request,
-                                   async_web_server_cpp::HttpConnectionPtr connection, const char* begin,
-                                   const char* end)
+                                   async_web_server_cpp::HttpConnectionPtr connection,
+                                   const char* begin, const char* end)
 {
   std::string type = request.get_query_param_value_or_default("type", "");
   igndbg << "WebVideoServer::handle_stream(): type=" << type << "\n";
@@ -115,6 +111,44 @@ bool WebVideoServer::handle_stream(const async_web_server_cpp::HttpRequest &requ
     streamer->Start();
     std::scoped_lock lock(subscriber_mutex);
     image_subscribers.push_back(streamer);
+  }
+  else
+  {
+    async_web_server_cpp::HttpReply::stock_reply(async_web_server_cpp::HttpReply::not_found)
+      (request, connection, begin, end);
+  }
+  return true;
+}
+
+bool WebVideoServer::handle_stream_viewer(const async_web_server_cpp::HttpRequest &request,
+                                          async_web_server_cpp::HttpConnectionPtr connection,
+                                          const char* begin, const char* end)
+{
+  std::string type = request.get_query_param_value_or_default("type", "");
+  std::string topic = request.get_query_param_value_or_default("topic", "");
+  igndbg << "WebVideoServer::handle_stream_viewer(): type=" << type << " topic=" << topic << "\n";
+
+  if (stream_types.find(type) != stream_types.end())
+  {
+    std::shared_ptr<ImageStreamer> streamer = stream_types[type]->create_streamer(request, connection);
+    streamer->Start();
+    std::scoped_lock lock(subscriber_mutex);
+    image_subscribers.push_back(streamer);
+
+    async_web_server_cpp::HttpReply::builder(async_web_server_cpp::HttpReply::ok)
+      .header("Connection", "close")
+      .header("Server", "web_video_server")
+      .header("Content-type", "text/html;")
+      .write(connection);
+
+    std::stringstream ss;
+    ss << "<html><head><title>" << topic << "</title></head><body>";
+    ss << "<h1>" << topic << "</h1>";
+    ss << stream_types[type]->create_viewer(request);
+    ss << "</body></html>";
+
+    std::cout << ss.str() << std::endl;
+    connection->write(ss.str());
   }
   else
   {
