@@ -51,7 +51,7 @@ bool HttpRequestHandlerGroup::operator()(const HttpRequest &request, HttpConnect
     if (handler.first(request))
     {
       if(handler.second(request, connection, begin, end))
-	return true;
+	      return true;
     }
   }
   return default_handler_(request, connection, begin, end);

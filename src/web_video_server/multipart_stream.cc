@@ -1,6 +1,9 @@
 #include "ignition/web_video_server/multipart_stream.hh"
 #include "ignition/async_web_server_cpp/http_reply.hh"
 
+
+#include <cstdio>
+
 namespace ignition {
 namespace web_video_server
 {
@@ -27,9 +30,9 @@ void MultipartStream::sendInitialHeader() {
 }
 
 void MultipartStream::sendPartHeader(const Time &time, const std::string& type, size_t payload_size) {
-  char stamp[20];
+  char stamp[25];
 
-  sprintf(stamp, "%.06lf", static_cast<double>(time.time_since_epoch().count()));
+  snprintf(stamp, 25, "%.0lf", static_cast<double>(time.time_since_epoch().count()));
   auto headers = std::make_shared<std::vector<async_web_server_cpp::HttpHeader>>();
 
   headers->push_back(async_web_server_cpp::HttpHeader("Content-type", type));

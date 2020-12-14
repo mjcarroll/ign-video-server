@@ -194,7 +194,7 @@ std::optional<bool> WebsocketFrameParser::consume(WebsocketFrame& frame, char in
     //unmask the frame
     if (frame.header.mask)
     {
-      for (int i = 0; i < frame.length; ++i)
+      for (size_t i = 0; i < frame.length; ++i)
       {
         frame.content[i] = frame.content[i] ^ frame.mask[i % 4];
       }

@@ -1,5 +1,7 @@
 #include "ignition/web_video_server/ign_image_streamer.hh"
 
+#include <ignition/common/Console.hh>
+
 namespace ignition {
 namespace web_video_server {
 
@@ -31,13 +33,16 @@ void IgnTransportImageStreamer::Start()
     }
   }
 
-  inactive = true;
   if (!imageTopics.count(this->topic))
   {
+    inactive = true;
     std::cerr << "Could not find topic: " << this->topic << " to stream" << std::endl;
   }
-
-  node.Subscribe(this->topic, &IgnTransportImageStreamer::OnImageMsg, this);
+  else
+  {
+    inactive = false;
+    node.Subscribe(this->topic, &IgnTransportImageStreamer::OnImageMsg, this);
+  }
 }
 
 void IgnTransportImageStreamer::Initialize()
@@ -48,7 +53,10 @@ void IgnTransportImageStreamer::Initialize()
 void IgnTransportImageStreamer::OnImageMsg(const ignition::msgs::Image &_msg)
 {
   if (this->inactive)
+  {
+    igndbg << "Received image message, but streamer inactive\n";
     return;
+  }
 
   try
   {
@@ -62,7 +70,7 @@ void IgnTransportImageStreamer::OnImageMsg(const ignition::msgs::Image &_msg)
   }
   catch(std::exception &ex)
   {
-    std::cerr << "Error sending image: " << ex.what() << std::endl;
+    ignerr << "Error sending image: " << ex.what() << std::endl;
     this->inactive = true;
   }
 }

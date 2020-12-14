@@ -1,8 +1,8 @@
 #include "ignition/web_video_server/web_video_server.hh"
 #include "ignition/web_video_server/png_streamer.hh"
 
-
 #include <ignition/async_web_server_cpp/http_reply.hh>
+#include <ignition/common/Console.hh>
 
 #include <iostream>
 
@@ -34,12 +34,13 @@ WebVideoServer::WebVideoServer(const std::string &_address, int _port):
   }
   catch (const std::exception& ex)
   {
-    std::cerr << ex.what() << std::endl;
+    ignerr << "Error creating server: " << ex.what() << std::endl;
   }
 }
 
 void WebVideoServer::spin()
 {
+  igndbg << "WebVideoServer::spin" << std::endl;
   server->run();
 }
 
@@ -47,6 +48,10 @@ bool WebVideoServer::handle_list_streams(const async_web_server_cpp::HttpRequest
                                    async_web_server_cpp::HttpConnectionPtr connection, const char* begin,
                                    const char* end)
 {
+  (void) begin;
+  (void) end;
+  igndbg << "WebVideoServer::handle_list_streams()\n";
+
   std::vector<std::string> allTopics;
   std::vector<std::string> imageTopics;
 
@@ -102,6 +107,7 @@ bool WebVideoServer::handle_stream(const async_web_server_cpp::HttpRequest &requ
                                    const char* end)
 {
   std::string type = request.get_query_param_value_or_default("type", "");
+  igndbg << "WebVideoServer::handle_stream(): type=" << type << "\n";
 
   if (stream_types.find(type) != stream_types.end())
   {

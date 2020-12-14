@@ -1,5 +1,7 @@
 #include "ignition/web_video_server/web_video_server.hh"
 
+#include <ignition/common/Console.hh>
+
 #include <atomic>
 #include <csignal>
 
@@ -13,6 +15,9 @@ void signal_handler(int _signal)
 
 int main(int argc, char** argv)
 {
+  ignition::common::Console::SetVerbosity(4);
+
+
   // Install a signal handler for SIGINT and SIGTERM.
   std::signal(SIGINT,  signal_handler);
   std::signal(SIGTERM, signal_handler);

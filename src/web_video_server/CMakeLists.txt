@@ -13,6 +13,7 @@ target_link_libraries(
   async_web_server_cpp
   ignition-msgs6::ignition-msgs6
   ignition-transport9::ignition-transport9
+  ignition-common3::ignition-common3
   ignition-common3::graphics
 )
 
