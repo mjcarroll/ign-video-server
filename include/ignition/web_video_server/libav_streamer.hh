@@ -72,8 +72,8 @@ class LibavStreamerType : public ImageStreamerType
 public:
   LibavStreamerType(const std::string &format_name, const std::string &codec_name, const std::string &content_type);
 
-  std::shared_ptr<ImageStreamer> create_streamer(const async_web_server_cpp::HttpRequest &request,
-                                                   async_web_server_cpp::HttpConnectionPtr connection);
+  virtual std::shared_ptr<ImageStreamer> create_streamer(const async_web_server_cpp::HttpRequest &request,
+                                                         async_web_server_cpp::HttpConnectionPtr connection);
 
   std::string create_viewer(const async_web_server_cpp::HttpRequest &request);
 

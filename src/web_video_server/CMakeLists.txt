@@ -6,6 +6,9 @@ add_library(
   multipart_stream.cc
   png_streamer.cc
   libav_streamer.cc
+  vp8_streamer.cc
+  vp9_streamer.cc
+  h264_streamer.cc
 )
 
 target_link_libraries(

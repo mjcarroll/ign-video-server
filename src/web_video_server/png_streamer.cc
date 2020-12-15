@@ -39,9 +39,7 @@ std::string
 PngStreamerType::create_viewer(const async_web_server_cpp::HttpRequest &request)
 {
   std::stringstream ss;
-  ss << "<img src=\"/stream?";
-  ss << request.query;
-  ss << "\"></img>";
+  ss << R"(<img src="/stream?)" << request.query << R"(" width="320" height="240" />)";
   return ss.str();
 }
 

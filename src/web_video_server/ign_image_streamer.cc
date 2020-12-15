@@ -15,6 +15,7 @@ IgnTransportImageStreamer::IgnTransportImageStreamer(
 
 void IgnTransportImageStreamer::Start()
 {
+  igndbg << "IgnTransportImageStreamer::Start()\n";
   std::vector<std::string> allTopics;
   std::set<std::string> imageTopics;
 
@@ -64,6 +65,7 @@ void IgnTransportImageStreamer::OnImageMsg(const ignition::msgs::Image &_msg)
     {
       this->Initialize(_msg);
       this->initialized = true;
+      igndbg << "Initialized" << std::endl;
     }
 
     this->SendImage(_msg);

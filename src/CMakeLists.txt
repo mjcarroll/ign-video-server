@@ -12,6 +12,7 @@ target_link_libraries(
   ignition-msgs6::ignition-msgs6
   ignition-transport9::ignition-transport9
   ignition-common3::graphics
+  ${OpenCV_LIBS}
 )
 
 

@@ -13,8 +13,7 @@ class ImageStreamer
                         async_web_server_cpp::HttpConnectionPtr _connection);
 
   public: virtual ~ImageStreamer() = default;
-
-  public: virtual void Start() = 0;
+public: virtual void Start() = 0;
 
   public: bool IsInactive() { return inactive; }
 

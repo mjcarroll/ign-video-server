@@ -2,7 +2,13 @@
 
 #include "ignition/async_web_server_cpp/http_reply.hh"
 
+
+#include <cstdint>
 #include <mutex>
+#include <vector>
+
+#define AV_CODEC_FLAG_GLOBAL_HEADER (1 << 22)
+#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
 
 namespace ignition {
 namespace web_video_server {
@@ -118,6 +124,7 @@ void LibavStreamer::initializeEncoder()
 // output callback for ffmpeg IO context
 static int dispatch_output_packet(void* opaque, uint8_t* buffer, int buffer_size)
 {
+  igndbg << "dispatch_output_packet: " << buffer_size << std::endl;
   async_web_server_cpp::HttpConnectionPtr connection = *((async_web_server_cpp::HttpConnectionPtr*) opaque);
   std::vector<uint8_t> encoded_frame;
   encoded_frame.assign(buffer, buffer + buffer_size);
@@ -283,6 +290,7 @@ void LibavStreamer::Initialize(const ignition::msgs::Image &_msg)
 
 void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
 {
+  igndbg << "LibavStreamer::SendImage" << std::endl;
   auto output_width = _msg.width();
   auto output_height = _msg.height();
   std::vector<uint8_t> encoded_frame(6 * output_width * output_height);
@@ -292,14 +300,15 @@ void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
 
   if (!first_set)
   {
+    first_set = true;
     first_image_timestamp = stamp;
   }
 
   std::scoped_lock lock(encode_mutex);
 #if (LIBAVUTIL_VERSION_MAJOR < 53)
-  PixelFormat input_coding_format = PIX_FMT_BGR24;
+  PixelFormat input_coding_format = PIX_FMT_RGB24;
 #else
-  AVPixelFormat input_coding_format = AV_PIX_FMT_BGR24;
+  AVPixelFormat input_coding_format = AV_PIX_FMT_RGB24;
 #endif
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
@@ -314,16 +323,23 @@ void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
   if (!sws_context)
   {
     static int sws_flags = SWS_BICUBIC;
-    sws_context = sws_getContext(output_width, output_height, input_coding_format, output_width, output_height,
-                                  codec_context->pix_fmt, sws_flags, NULL, NULL, NULL);
+    sws_context = sws_getContext(
+        output_width, output_height, input_coding_format,
+        output_width, output_height, codec_context->pix_fmt,
+        sws_flags, nullptr, nullptr, nullptr);
+
     if (!sws_context)
     {
       throw std::runtime_error("Could not initialize the conversion context");
     }
   }
+
   int ret = sws_scale(sws_context,
-          (const uint8_t * const *)raw_frame->data, raw_frame->linesize, 0,
-          output_height, frame->data, frame->linesize);
+          (const uint8_t * const *)raw_frame->data,
+          raw_frame->linesize,
+          0, output_height,
+          frame->data, frame->linesize);
+
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
   delete raw_frame;
@@ -362,6 +378,7 @@ void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
   {
     throw std::runtime_error("Error encoding video frame");
   }
+
   ret = avcodec_receive_packet(codec_context, &pkt);
   got_packet = pkt.size > 0;
   if (ret == AVERROR_EOF)
@@ -379,6 +396,8 @@ void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
   {
     std::chrono::duration<double, std::ratio<1,1>> diff = (stamp - first_image_timestamp);
     double seconds = diff.count();
+
+    igndbg << "Diff: " << seconds << std::endl;
 
     // Encode video at 1/0.95 to minimize delay
     pkt.pts = (int64_t)(seconds / av_q2d(video_stream->time_base) * 0.95);
@@ -398,6 +417,7 @@ void LibavStreamer::SendImage(const ignition::msgs::Image &_msg)
   }
   else
   {
+    igndbg << "encodedframe.clear()\n";
     encoded_frame.clear();
   }
 #if LIBAVCODEC_VERSION_INT < 54
@@ -430,9 +450,9 @@ LibavStreamerType::create_streamer(const async_web_server_cpp::HttpRequest &requ
 std::string LibavStreamerType::create_viewer(const async_web_server_cpp::HttpRequest &request)
 {
   std::stringstream ss;
-  ss << "<video src=\"/stream?";
-  ss << request.query;
-  ss << "\" autoplay=\"true\" preload=\"none\"></video>";
+  ss << R"(<video width="320" height="240" autoplay>)";
+  ss << R"(  <source src="/stream?)" << request.query << R"(">)";
+  ss << R"(</video>)";
   return ss.str();
 }
 

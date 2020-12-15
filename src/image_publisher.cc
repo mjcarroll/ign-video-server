@@ -8,6 +8,10 @@
 #include <ignition/msgs.hh>
 #include <ignition/transport.hh>
 #include <ignition/common/Image.hh>
+#include <ignition/math/Helpers.hh>
+
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 /// \brief Flag used to break the publisher loop and terminate the program.
 static std::atomic<bool> g_terminatePub(false);
@@ -25,9 +29,9 @@ void signal_handler(int _signal)
 //////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 2)
   {
-    std::cout << "Usage: " << argv[0] << " /ign/topic image_filename.jpg" << std::endl;
+    std::cout << "Usage: " << argv[0] << " /ign/topic" << std::endl;
     return 1;
   }
 
@@ -38,7 +42,6 @@ int main(int argc, char **argv)
   // Create a transport node and advertise a topic.
   ignition::transport::Node node;
   std::string topic = argv[1];
-  std::string image_fname = argv[2];
 
   auto pub = node.Advertise<ignition::msgs::Image>(topic);
   if (!pub)
@@ -47,39 +50,50 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  // Prepare the message.
-  ignition::msgs::Image msg;
 
-  ignition::common::Image image(image_fname);
+  int width = 320;
+  int height = 240;
 
-  msg.set_width(image.Width());
-  msg.set_height(image.Height());
-  msg.set_step(image.Pitch());
+  cv::VideoCapture cap;
+  cap.open(0);
+  cap.set(cv::CAP_PROP_FRAME_WIDTH, static_cast<double>(width));
+  cap.set(cv::CAP_PROP_FRAME_HEIGHT, static_cast<double>(height));
 
-  unsigned char *data = nullptr;
-  unsigned int size = 0;
-
-
-  switch(image.PixelFormat())
+  if (!cap.isOpened())
   {
-    case ignition::common::Image::RGB_INT8:
-      msg.set_pixel_format_type(ignition::msgs::PixelFormatType::RGB_INT8);
-      break;
-    default:
-      std::cerr << "Unhandled pixel format" << std::endl;
-      break;
+    std::cerr << "Could not open video stream" << std::endl;
   }
 
-  image.Data(&data, size);
-  msg.set_data(data, size);
+  // Prepare the message.
+  ignition::msgs::Image msg;
 
   // Publish messages at 1Hz.
   while (!g_terminatePub)
   {
+    cv::Mat frame;
+    cap >> frame;
+
+    if (frame.empty()) break;
+
+    cv::imshow("image_publisher", frame);
+    cv::waitKey(1);
+
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+
+    msg.set_pixel_format_type(ignition::msgs::PixelFormatType::RGB_INT8);
+    msg.set_width(width);
+    msg.set_height(height);
+    msg.set_data(frame.data, 3 * width * height);
+
+    auto now = std::chrono::steady_clock::now();
+    auto [sec, nsec] = ignition::math::timePointToSecNsec(now);
+    msg.mutable_header()->mutable_stamp()->set_sec(sec);
+    msg.mutable_header()->mutable_stamp()->set_nsec(nsec);
+
     if (!pub.Publish(msg))
       break;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   return 0;

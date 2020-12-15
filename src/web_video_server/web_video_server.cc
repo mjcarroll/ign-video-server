@@ -1,5 +1,9 @@
 #include "ignition/web_video_server/web_video_server.hh"
+
 #include "ignition/web_video_server/png_streamer.hh"
+#include "ignition/web_video_server/vp8_streamer.hh"
+#include "ignition/web_video_server/vp9_streamer.hh"
+#include "ignition/web_video_server/h264_streamer.hh"
 
 #include <ignition/async_web_server_cpp/http_reply.hh>
 #include <ignition/common/Console.hh>
@@ -27,6 +31,9 @@ WebVideoServer::WebVideoServer(const std::string &_address, int _port):
   */
 
   stream_types["png"] = std::shared_ptr<ImageStreamerType>(new PngStreamerType());
+  stream_types["vp8"] = std::shared_ptr<ImageStreamerType>(new Vp8StreamerType());
+  stream_types["vp9"] = std::shared_ptr<ImageStreamerType>(new Vp9StreamerType());
+  stream_types["h264"] = std::shared_ptr<ImageStreamerType>(new H264StreamerType());
 
   try
   {
@@ -130,11 +137,6 @@ bool WebVideoServer::handle_stream_viewer(const async_web_server_cpp::HttpReques
 
   if (stream_types.find(type) != stream_types.end())
   {
-    std::shared_ptr<ImageStreamer> streamer = stream_types[type]->create_streamer(request, connection);
-    streamer->Start();
-    std::scoped_lock lock(subscriber_mutex);
-    image_subscribers.push_back(streamer);
-
     async_web_server_cpp::HttpReply::builder(async_web_server_cpp::HttpReply::ok)
       .header("Connection", "close")
       .header("Server", "web_video_server")
@@ -146,8 +148,6 @@ bool WebVideoServer::handle_stream_viewer(const async_web_server_cpp::HttpReques
     ss << "<h1>" << topic << "</h1>";
     ss << stream_types[type]->create_viewer(request);
     ss << "</body></html>";
-
-    std::cout << ss.str() << std::endl;
     connection->write(ss.str());
   }
   else

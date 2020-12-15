@@ -23,7 +23,6 @@ ign_configure_project(VERSION_SUFFIX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 #============================================================================
 # Search for project-specific dependencies
 #============================================================================
@@ -46,6 +45,8 @@ set(IGN_MSGS_VER ${ignition-msgs6_VERSION_MAJOR})
 #--------------------------------------
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
+
+find_package(OpenCV REQUIRED)
 
 ign_configure_build(QUIT_IF_BUILD_ERRORS) 
 
