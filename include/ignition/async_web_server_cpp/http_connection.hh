@@ -2,8 +2,8 @@
 #define IGNITION__ASYNC_WEB_SERVER_CPP__HTTP_CONNECTION_HH_
 
 #include <asio/io_service.hpp>
-#include <asio/io_context_strand.hpp>
 #include <asio/ip/tcp.hpp>
+#include <asio/strand.hpp>
 
 #include "ignition/async_web_server_cpp/http_fwd.hh"
 #include "ignition/async_web_server_cpp/http_request_handler.hh"
