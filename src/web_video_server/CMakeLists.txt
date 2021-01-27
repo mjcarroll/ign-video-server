@@ -20,6 +20,7 @@ target_link_libraries(
   ignition-common3::ignition-common3
   ignition-common3::graphics
   ignition-common3::av
+  stdc++fs
 )
 
 add_executable(

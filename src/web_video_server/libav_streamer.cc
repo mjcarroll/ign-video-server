@@ -77,7 +77,7 @@ LibavStreamer::LibavStreamer(const async_web_server_cpp::HttpRequest &_request,
   gop = get_int("gop", 25);
 
 #if ( LIBAVCODEC_VERSION_INT  < AV_VERSION_INT(58,9,100) )
-  av_lockmgr_register(&ffmpeg_boost_mutex_lock_manager);
+  av_lockmgr_register(&ffmpeg_mutex_lock_manager);
   av_register_all();
 #endif
 }
